@@ -55,6 +55,15 @@ def login_required(view_func):
 
     @wraps(view_func)
     def wrapper(*args, **kwargs):
+        # Browsers send an OPTIONS "preflight" request BEFORE any
+        # cross-origin call that includes an Authorization header, and
+        # that preflight never carries the token. If we demanded a token
+        # here, every preflight would fail and the browser would refuse
+        # to send the real request ("Failed to fetch"). Preflights hold
+        # no data, so letting them through is safe.
+        if request.method == "OPTIONS":
+            return view_func(*args, **kwargs)
+
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
             raise ApiError("Missing or malformed Authorization header.", 401)

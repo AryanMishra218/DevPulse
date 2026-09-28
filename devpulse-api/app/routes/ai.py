@@ -18,14 +18,11 @@ from app.auth import login_required
 ai_bp = Blueprint("ai", __name__)
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
 
 
-def _call_groq(system_prompt, user_prompt, max_tokens=300):
+def _call_groq(system_prompt, user_prompt, max_tokens=600):
     api_key = current_app.config.get("GROQ_API_KEY")
     if not api_key:
-        # Fails clearly and safely instead of crashing, so the rest
-        # of the app keeps working even without an AI key configured.
         raise ApiError(
             "AI feature is not configured. Set GROQ_API_KEY in your .env file.",
             503,
@@ -36,20 +33,36 @@ def _call_groq(system_prompt, user_prompt, max_tokens=300):
             GROQ_URL,
             headers={"Authorization": f"Bearer {api_key}"},
             json={
-                "model": GROQ_MODEL,
+                "model": current_app.config["GROQ_MODEL"],
                 "messages": [
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
+                # gpt-oss models "think" first, and that thinking counts
+                # against this limit. "low" keeps it short, and the larger
+                # max_tokens leaves room for the actual answer.
+                "reasoning_effort": "low",
                 "max_tokens": max_tokens,
                 "temperature": 0.7,
             },
-            timeout=15,
+            timeout=30,
         )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
     except requests.exceptions.RequestException as e:
-        raise ApiError(f"AI request failed: {str(e)}", 502)
+        raise ApiError(f"Could not reach the AI service: {e}", 502)
+
+    if not response.ok:
+        # Show Groq's REAL error message (e.g. "model does not exist"),
+        # not just a status code, so problems are easy to diagnose.
+        try:
+            detail = response.json()["error"]["message"]
+        except Exception:
+            detail = response.text[:200]
+        raise ApiError(f"AI service error ({response.status_code}): {detail}", 502)
+
+    text = response.json()["choices"][0]["message"].get("content") or ""
+    if not text.strip():
+        raise ApiError("The AI returned an empty response. Please try again.", 502)
+    return text.strip()
 
 
 @ai_bp.route("/generate-description", methods=["POST"])
@@ -64,7 +77,7 @@ def generate_description():
             "Respond with ONLY the description, 1-2 sentences, no preamble."
         ),
         user_prompt=f"Write a project description for a project called: {data['name']}",
-        max_tokens=100,
+        max_tokens=500,
     )
     return jsonify({"description": text}), 200
 
@@ -83,7 +96,7 @@ def suggest_tasks():
             "one per line, no extra commentary."
         ),
         user_prompt=f"Project: {data['name']}\nDescription: {description}",
-        max_tokens=200,
+        max_tokens=700,
     )
 
     # Turn the AI's numbered-list text into a clean array the

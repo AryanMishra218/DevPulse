@@ -24,6 +24,11 @@ class Config:
     # Used to call Groq's AI API. Free key from https://console.groq.com
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
+    # Groq retires models regularly (llama-3.3-70b-versatile was shut
+    # down on 2026-08-16), so the model name lives in an env var:
+    # switching models later means editing .env, not code.
+    GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
     # Which frontend origin is allowed to call this API from a
     # browser. In development, the React dev server runs on 5173.
     ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "http://localhost:5173")
