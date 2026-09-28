@@ -1,0 +1,107 @@
+/* ============================================
+   DESIGN TOKENS
+   Why: instead of typing colors/fonts everywhere,
+   we define them once here as CSS variables.
+   If we want to change the theme later, we only
+   edit this one place.
+   ============================================ */
+:root {
+  --bg: #14171f;
+  --surface: #1b2029;
+  --surface-alt: #242b38;
+  --border: #2a3140;
+  --text: #e8eaf0;
+  --text-muted: #8891a6;
+  --accent: #f2c744;      /* amber - primary accent */
+  --accent-soft: #f2c74422;
+  --success: #5fd9a4;     /* mint - "done" status */
+  --success-soft: #5fd9a422;
+  --warning: #f2a444;
+  --danger: #ef6461;      /* soft red - overdue / high priority */
+  --danger-soft: #ef646122;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+
+  --radius: 8px;
+  --sidebar-width: 230px;
+
+  color-scheme: dark;
+}
+
+/* ============================================
+   LIGHT THEME
+   Why this works with zero changes anywhere else:
+   every component only ever uses var(--bg),
+   var(--text), etc. — never a hardcoded color.
+   So swapping these values here is enough to
+   re-theme the ENTIRE app.
+   ============================================ */
+:root[data-theme="light"] {
+  --bg: #f0f2f6;
+  --surface: #ffffff;
+  --surface-alt: #e7eaf0;
+  --border: #d8dce4;
+  --text: #1b1f27;
+  --text-muted: #5b6472;
+  --accent: #c6890a;
+  --accent-soft: #c6890a1a;
+  --success: #2e9a6b;
+  --success-soft: #2e9a6b1a;
+  --warning: #c6890a;
+  --danger: #d2564f;
+  --danger-soft: #d2564f1a;
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input {
+  font-family: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
